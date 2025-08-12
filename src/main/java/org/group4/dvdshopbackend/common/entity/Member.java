@@ -30,4 +30,15 @@ public class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(nullable = false)
+    private String deletedYn;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.deletedYn == null) {
+            this.deletedYn = "N";
+        }
+    }
+
 }
