@@ -1,5 +1,13 @@
 package org.group4.dvdshopbackend.models.cart.dto.addItem;
 
-public class AddItemRes {
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
+public class AddItemRes {
+	private Long cartItemId;
+	private Long cartId;
+	private Long itemId;
+	private int itemCount;
 }
