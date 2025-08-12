@@ -10,6 +10,12 @@ import org.group4.dvdshopbackend.common.entity.Member;
 @NoArgsConstructor
 public class PostMemberRes {
 
-    private Member memberDetail;
+    private Long id;
+
+    private String name;
+
+    private String email;
+
+    private String address;
 
 }
