@@ -21,7 +21,9 @@ public class CartController {
 	@PostMapping("/carts")
 	ApiResult<AddItemRes> addItem(@RequestBody AddItemReq req) {
 
-		return new ApiResult<>(null);
+		var res = cartService.addItem(req);
+
+		return new ApiResult<>(res);
 	}
 
 	// 2. 장바구니 아이템 목록 조회

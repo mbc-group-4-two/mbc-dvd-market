@@ -11,6 +11,7 @@ import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemRes;
 import org.group4.dvdshopbackend.models.cart.repository.CartItemRepository;
 import org.group4.dvdshopbackend.models.cart.repository.CartRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,17 @@ public class CartServiceImpl implements CartService {
 	private final CartItemRepository cartItemRepository;
 
 	@Override
+	@Transactional
 	public AddItemRes addItem(AddItemReq req) {
+		var memberEmail = req.getMemberId();
+		var itemId = req.getItemId();
+
+		// 1. 멤버 조회
+//		memberRepository
+
+		// 2. 카트 조회 후 없으면 생성
+//		cartRepository.
+
 		return null;
 	}
 
