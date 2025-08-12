@@ -1,6 +1,7 @@
 package org.group4.dvdshopbackend.models.member.service;
 
 import lombok.RequiredArgsConstructor;
+import org.group4.dvdshopbackend.common.entity.Member;
 import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberRes;
 import org.group4.dvdshopbackend.models.member.dto.getMemberDetail.GetMemberDetailReq;
@@ -12,6 +13,7 @@ import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberRes;
 import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberRes;
 import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +24,20 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public PostMemberRes postMember(PostMemberReq request) {
-        return null;
+
+        ModelMapper modelMapper = new ModelMapper();
+
+        var postMember = modelMapper.map(request, Member.class);
+
+        var member = memberJpaRepository.save(postMember);
+
+        return PostMemberRes.builder()
+                .id(member.getId())
+                .name(member.getName())
+                .email(member.getEmail())
+                .address(member.getAddress())
+                .build();
+
     }
 
     @Override

@@ -8,4 +8,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ModifyMemberReq {
+
+    private Long id;
+
+    private String password;
+
+    private String address;
+
 }
