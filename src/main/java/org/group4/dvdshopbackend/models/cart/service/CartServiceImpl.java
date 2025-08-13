@@ -60,6 +60,7 @@ public class CartServiceImpl implements CartService {
 		} else {
 			// 수정
 			cartItem = cartItemResult.orElseThrow();
+      
 			cartItem.setCount(cartItem.getCount() + 1);
 		}
 
