@@ -11,7 +11,8 @@ import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemRes;
 import org.group4.dvdshopbackend.models.cart.service.CartService;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/api/cart")
+@RestController
+@RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
 

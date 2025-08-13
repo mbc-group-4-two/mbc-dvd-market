@@ -11,7 +11,8 @@ import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderRes;
 import org.group4.dvdshopbackend.models.order.service.OrderService;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/api/order")
+@RestController
+@RequestMapping("/api/order")
 @RequiredArgsConstructor
 public class OrderController {
 
