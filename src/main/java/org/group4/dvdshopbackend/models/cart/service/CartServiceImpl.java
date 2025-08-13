@@ -28,11 +28,11 @@ public class CartServiceImpl implements CartService {
 	@Override
 	@Transactional
 	public AddItemRes addItem(AddItemReq req) {
-		var memberEmail = req.getMemberId();
+		var memberEmail = req.getMemberEmail();
 		var itemId = req.getItemId();
 
 		// 1. 멤버 조회
-		var member = memberJpaRepository.findById(memberEmail)
+		var member = memberJpaRepository.findByEmailAndDeletedYn(memberEmail, "N")
 				.orElseThrow();
 
 		// 2. 카트 조회 후 없으면 생성
@@ -48,17 +48,19 @@ public class CartServiceImpl implements CartService {
 		// 3. cart item 추가
 		// cart ID + item ID로 cart 조회
 
-		var cartItem = cartItemRepository.findCartItemByCartIdAndItemId(cart.getId(), itemId)
-				.orElseThrow();
+		CartItem cartItem = null;
+		var cartItemResult = cartItemRepository.findCartItemByCartIdAndItemId(cart.getId(), itemId);
 
-		if (cartItem == null) {
+		if (cartItemResult.isEmpty()) {
 			// 추가
-			var newCartItem = new CartItem();
-			newCartItem.setCart(cart);
-			newCartItem.setCount(req.getItemCount());
-			cartItemRepository.save(newCartItem);
+			cartItem = new CartItem();
+			cartItem.setCart(cart);
+			cartItem.setCount(req.getItemCount());
+			cartItemRepository.save(cartItem);
 		} else {
 			// 수정
+			cartItem = cartItemResult.orElseThrow();
+      
 			cartItem.setCount(cartItem.getCount() + 1);
 		}
 

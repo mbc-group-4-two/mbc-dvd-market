@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class AddItemReq {
-	private Long memberId;
+	private String memberEmail;
 	private Long itemId;
 	private int itemCount;
 }
