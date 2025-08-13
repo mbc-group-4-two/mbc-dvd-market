@@ -19,4 +19,5 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     @Query("select m from Member m where (:includeDeleted = true or m.deletedYn = 'N')")
     Page<Member> searchAll(@Param("includeDeleted") boolean includeDeleted, Pageable pageable);
+
 }

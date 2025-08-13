@@ -6,7 +6,13 @@ import lombok.Setter;
 import lombok.ToString;
 import org.group4.dvdshopbackend.common.enums.Role;
 import org.group4.dvdshopbackend.core.BaseEntity;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="member")
@@ -30,4 +36,16 @@ public class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(nullable = false)
+    private String deletedYn;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.deletedYn == null) this.deletedYn = "N";
+
+        if (this.role == null) this.role = Role.USER;
+
+    }
+
 }

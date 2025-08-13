@@ -2,7 +2,9 @@ package org.group4.dvdshopbackend.models.member.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.group4.dvdshopbackend.core.api.ApiResult;
+import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberRes;
+import org.group4.dvdshopbackend.models.member.dto.getMemberDetail.GetMemberDetailReq;
 import org.group4.dvdshopbackend.models.member.dto.getMemberDetail.GetMemberDetailRes;
 import org.group4.dvdshopbackend.models.member.dto.getMemberList.GetMemberListRes;
 import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberReq;
@@ -46,7 +48,13 @@ public class MemberController {
     public ApiResult<GetMemberDetailRes> getMemberDetail(
             @PathVariable("memberId") Long memberId) {
 
-        return null;
+        var request = GetMemberDetailReq.builder()
+                .id(memberId)
+                .build();
+
+        var result = memberService.getMemberDetail(request);
+
+        return new ApiResult<>(result);
     }
 
     // 회원정보 수정하기
@@ -56,17 +64,21 @@ public class MemberController {
     public ApiResult<ModifyMemberRes> modifyMember(
             @RequestBody ModifyMemberReq request) {
 
-        return null;
+        var result = memberService.modifyMember(request);
+
+        return new ApiResult<>(result);
     }
 
     // 회원탈퇴
-    @DeleteMapping("/members/{memberId}")
+    @DeleteMapping("/members")
     @ResponseBody
     @Transactional
     public ApiResult<DeleteMemberRes> deleteMember(
-            @PathVariable("memberId") Long memberId) {
+            @RequestBody DeleteMemberReq request) {
 
-        return null;
+        var result = memberService.deleteMember(request);
+
+        return new ApiResult<>(result);
     }
 
 }
