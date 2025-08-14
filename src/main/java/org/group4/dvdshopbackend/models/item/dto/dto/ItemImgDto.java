@@ -1,4 +1,4 @@
-package org.group4.dvdshopbackend.models.item.dto;
+package org.group4.dvdshopbackend.models.item.dto.dto;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -3,9 +3,10 @@ package org.group4.dvdshopbackend.models.item.dto.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.group4.dvdshopbackend.core.api.ApiResult;
-import org.group4.dvdshopbackend.models.item.dto.ItemFormDto;
+import org.group4.dvdshopbackend.models.item.dto.dto.ItemFormDto;
+import org.group4.dvdshopbackend.models.item.dto.dto.ItemListRes;
 import org.group4.dvdshopbackend.models.item.dto.service.ItemService;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,6 +48,17 @@ public class ItemController {
         itemService.deleteItem(itemId);
         return new ApiResult<>(true);
     }
+
+    @GetMapping
+    public ApiResult<Page<ItemListRes>> getPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        var result = itemService.getItemPage(page, size);
+        return new ApiResult<>(result);
+    }
+
+
 }
 
 
