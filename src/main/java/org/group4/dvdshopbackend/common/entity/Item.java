@@ -6,8 +6,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.group4.dvdshopbackend.common.enums.ItemSellStatus;
 import org.group4.dvdshopbackend.core.BaseEntity;
-import org.group4.dvdshopbackend.core.exception.OutOfStockException;
-import org.group4.dvdshopbackend.models.item.dto.ItemFormDto;
 
 @Entity
 @Table(name="item")
