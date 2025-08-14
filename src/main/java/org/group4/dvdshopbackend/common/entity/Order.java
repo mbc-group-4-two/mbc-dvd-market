@@ -1,8 +1,7 @@
 package org.group4.dvdshopbackend.common.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.group4.dvdshopbackend.common.enums.OrderStatus;
 import org.group4.dvdshopbackend.core.BaseEntity;
 
@@ -13,6 +12,8 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 @Getter @Setter
+@Builder
+@AllArgsConstructor @NoArgsConstructor
 public class Order extends BaseEntity {
 
     @Id @GeneratedValue
@@ -31,4 +32,9 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL
             , orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    public void addOrderItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.attachOrder(this);
+    }
 }

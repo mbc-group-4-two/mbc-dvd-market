@@ -1,12 +1,14 @@
 package org.group4.dvdshopbackend.common.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.group4.dvdshopbackend.core.BaseEntity;
 
 @Entity
 @Getter @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class OrderItem extends BaseEntity {
 
     @Id @GeneratedValue
@@ -24,4 +26,8 @@ public class OrderItem extends BaseEntity {
     private int orderPrice;
 
     private int count;
+
+    public void attachOrder(Order order) {
+        this.order = order;
+    }
 }
