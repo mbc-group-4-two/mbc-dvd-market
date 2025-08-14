@@ -34,4 +34,12 @@ public class Item extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ItemSellStatus itemSellStatus;
+
+    public void onOrderEvent(int buyCount) {
+        stockNumber -= buyCount;
+
+        if (0 > stockNumber) {
+            throw new RuntimeException("재고 부족");
+        }
+    }
 }

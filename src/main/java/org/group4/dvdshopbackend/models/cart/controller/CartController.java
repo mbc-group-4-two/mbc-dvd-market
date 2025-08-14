@@ -6,12 +6,17 @@ import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemReq;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemRes;
 import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListReq;
 import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListRes;
+import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartReq;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartRes;
+import org.group4.dvdshopbackend.models.cart.dto.removeAllItems.RemoveAllItemsReq;
+import org.group4.dvdshopbackend.models.cart.dto.removeAllItems.RemoveAllItemsRes;
+import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemReq;
 import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemRes;
 import org.group4.dvdshopbackend.models.cart.service.CartService;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("/api/cart")
+@RestController
+@RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -21,27 +26,44 @@ public class CartController {
 	@PostMapping("/carts")
 	ApiResult<AddItemRes> addItem(@RequestBody AddItemReq req) {
 
-		return new ApiResult<>(null);
+		var res = cartService.addItem(req);
+
+		return new ApiResult<>(res);
 	}
 
 	// 2. 장바구니 아이템 목록 조회
 	@GetMapping("/carts")
 	ApiResult<GetCartListRes> getCartList(@RequestBody GetCartListReq req) {
 
-		return new ApiResult<>(null);
+		var res = cartService.getCartList(req);
+
+		return new ApiResult<>(res);
 	}
 
 	// 3. 장바구니 아이템 추가/빼기
-	@PutMapping("/carts/{cartId}")
-	ApiResult<ModifyCartRes> modifyItem(@PathVariable Long cartId) {
+	@PutMapping("/carts/items/{itemId}")
+	ApiResult<ModifyCartRes> modifyItem(@PathVariable Long itemId, @RequestBody ModifyCartReq req) {
 
-		return new ApiResult<>(null);
+		var res = cartService.modifyCart(itemId, req);
+
+		return new ApiResult<>(res);
 	}
 
 	// 4. 장바구니 아이템 삭제
-	@DeleteMapping("/carts/{cartId}")
-	ApiResult<RemoveItemRes> removeItem(@PathVariable Long cartId) {
+	@DeleteMapping("/carts/items/{itemId}")
+	ApiResult<RemoveItemRes> removeItem(@PathVariable Long itemId) {
 
-		return new ApiResult<>(null);
+		var res = cartService.removeItem(itemId);
+
+		return new ApiResult<>(res);
+	}
+
+	// 5. 장바구니 아이템 비우기 (전체 삭제)
+	@DeleteMapping("/carts/{cartId}")
+	ApiResult<RemoveAllItemsRes> removeAllItems(@PathVariable Long cartId) {
+
+		var res = cartService.removeAllItemsRes(cartId);
+
+		return new ApiResult<>(res);
 	}
 }

@@ -1,5 +1,11 @@
 package org.group4.dvdshopbackend.models.cart.dto.modifyCart;
 
-public class ModifyCartRes {
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
+public class ModifyCartRes {
+	private Long itemId;
+	private int itemCount;
 }
