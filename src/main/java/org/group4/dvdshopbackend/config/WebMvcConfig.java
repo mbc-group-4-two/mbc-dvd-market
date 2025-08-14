@@ -2,6 +2,7 @@ package org.group4.dvdshopbackend.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -30,5 +31,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations(uploadPath);
     }
+
+
+    @Configuration
+    public class WebCorsConfig implements WebMvcConfigurer {
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+            registry.addMapping("/api/**") // API만 허용 (모두 열려면 "/**")
+                    .allowedOrigins("http://localhost:3000", "http://localhost:3001")
+                    .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+                    .allowedHeaders("*")
+                    .exposedHeaders("*")
+                    .allowCredentials(false); // 인증쿠키 필요하면 true + allowedOrigins에 * 금지
+        }
+    }
+
 
 }
