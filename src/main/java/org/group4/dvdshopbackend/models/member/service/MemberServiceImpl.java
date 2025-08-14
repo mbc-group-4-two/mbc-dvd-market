@@ -14,8 +14,11 @@ import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberRes;
 import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +53,36 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public GetMemberListRes getMemberList(GetMemberListReq request) {
-        return null;
+
+        var members = new ArrayList<Member>();
+
+        var pageable = request.getPageable("id");
+
+        Page<Member> pageResult = memberJpaRepository.findAll(pageable);
+
+        long totalElementCnt = pageResult.getTotalElements();
+        int totalPageCnt = pageResult.getTotalPages();
+        int pageNum = pageResult.getNumber();
+        int pageSize = pageResult.getSize();
+
+        boolean pageHasPrevious = pageResult.hasPrevious();
+        boolean pageHasNext = pageResult.hasNext();
+        boolean pageIsFirst = pageResult.isFirst();
+        boolean pageIsLast = pageResult.isLast();
+
+        pageResult.forEach(members::add);
+
+        return GetMemberListRes.builder()
+                .contents(members)
+                .totalElementCnt(totalElementCnt)
+                .totalPageCnt(totalPageCnt)
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .pageHasPrevious(pageHasPrevious)
+                .pageHasNext(pageHasNext)
+                .pageIsFirst(pageIsFirst)
+                .pageIsLast(pageIsLast)
+                .build();
     }
 
     @Override
@@ -77,8 +109,9 @@ public class MemberServiceImpl implements MemberService {
         if (request.getAddress() != null)
             member.setAddress(request.getAddress());
 
-        if (request.getPassword() != null)
-            member.setPassword(request.getPassword());
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            member.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
 
         return ModifyMemberRes.builder()
                 .modified(member)

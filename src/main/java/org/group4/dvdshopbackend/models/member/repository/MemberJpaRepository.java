@@ -14,10 +14,13 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     boolean existsByEmailAndDeletedYn(String email, String deletedYn);
 
-    @Query("select m from Member m where m.deletedYn = 'N'")
-    Page<Member> findAllActive(Pageable pageable);
+
+    Page<Member> findAll(Pageable pageable);
 
     @Query("select m from Member m where (:includeDeleted = true or m.deletedYn = 'N')")
     Page<Member> searchAll(@Param("includeDeleted") boolean includeDeleted, Pageable pageable);
 
+    Long id(Long id);
+
+    Optional<Member> findByEmail(String memberEmail);
 }
