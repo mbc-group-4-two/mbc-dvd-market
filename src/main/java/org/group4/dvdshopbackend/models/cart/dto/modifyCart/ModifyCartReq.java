@@ -1,5 +1,8 @@
 package org.group4.dvdshopbackend.models.cart.dto.modifyCart;
 
-public class ModifyCartReq {
+import lombok.Data;
 
+@Data
+public class ModifyCartReq {
+	int itemCount;
 }

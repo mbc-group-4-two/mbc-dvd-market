@@ -1,5 +1,11 @@
 package org.group4.dvdshopbackend.models.order.dto.sendOrder;
 
-public class SendOrderReq {
+import lombok.Data;
 
+import java.util.List;
+
+@Data
+public class SendOrderReq {
+	private String memberEmail;
+	private List<SendOrderReqOrderItemInfo> orderItemInfos;
 }

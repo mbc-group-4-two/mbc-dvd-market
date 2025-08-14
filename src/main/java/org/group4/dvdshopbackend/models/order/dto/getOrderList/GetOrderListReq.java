@@ -1,5 +1,8 @@
 package org.group4.dvdshopbackend.models.order.dto.getOrderList;
 
-public class GetOrderListReq {
+import lombok.Data;
 
+@Data
+public class GetOrderListReq {
+	private String memberEmail;
 }
