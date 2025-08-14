@@ -6,6 +6,7 @@ import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.deleteMember.DeleteMemberRes;
 import org.group4.dvdshopbackend.models.member.dto.getMemberDetail.GetMemberDetailReq;
 import org.group4.dvdshopbackend.models.member.dto.getMemberDetail.GetMemberDetailRes;
+import org.group4.dvdshopbackend.models.member.dto.getMemberList.GetMemberListReq;
 import org.group4.dvdshopbackend.models.member.dto.getMemberList.GetMemberListRes;
 import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberRes;
@@ -35,10 +36,23 @@ public class MemberController {
 
     //  회원 목록 보기(관리자용)
     @GetMapping("/members")
+    // @PreAuthorize("hasRole('ADMIN')")
     @ResponseBody
-    public ApiResult<GetMemberListRes> getMemberList() {
+    public ApiResult<GetMemberListRes> getMemberList(
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
 
-        return null;
+        page = (page == null || page < 1) ? 1 : page;
+        size = (size == null || size < 1) ? 10 : size;
+
+        var reqBody = GetMemberListReq.builder()
+                .page(page)
+                .size(size)
+                .build();
+
+        var result = memberService.getMemberList(reqBody);
+
+        return new ApiResult<>(result);
     }
 
     // 내정보 보기(일반 유저용)
