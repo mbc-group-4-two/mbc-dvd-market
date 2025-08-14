@@ -5,9 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
@@ -18,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.util.AntPathMatcher;
 
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -50,11 +47,10 @@ public class SecurityConfig {
         http
                 // 1) CSRF ON: 쿠키로 토큰 발급(프론트/포스트맨은 헤더 X-XSRF-TOKEN로 전송)
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-          
+
                 // 2) 경로 권한: 로그인/로그아웃, 공개 리소스만 열고 나머지는 보호
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/login/**","/api/member/members" , "/api/item/**", "/images/**").permitAll()
+                        .requestMatchers("/api/login/**", "/api/member/members", "/api/item/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -64,7 +60,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 
 
     @Bean
@@ -86,7 +81,9 @@ public class SecurityConfig {
                 m.setPassword(encoder.encode(pw));
             }
         });
+    }
 
+    @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         // 프론트에서 접속하는 모든 오리진을 등록
@@ -94,7 +91,7 @@ public class SecurityConfig {
                 "http://192.168.0.173:3000",
                 "http://localhost:3000"
         ));
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
         // (필요 시) 노출할 헤더 추가
@@ -103,5 +100,8 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
+
     }
 }
+
+
