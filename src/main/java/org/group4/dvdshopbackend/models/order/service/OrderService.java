@@ -23,5 +23,5 @@ public interface OrderService {
 	GetOrderListRes getOrderList(GetOrderListReq req);
 
 	// 3. 주문 취소
-	CancelOrderRes cancelOrder(CancelOrderReq req);
+	CancelOrderRes cancelOrder(Long orderId);
 }

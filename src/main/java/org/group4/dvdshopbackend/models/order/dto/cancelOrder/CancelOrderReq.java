@@ -1,5 +1,8 @@
 package org.group4.dvdshopbackend.models.order.dto.cancelOrder;
 
-public class CancelOrderReq {
+import lombok.Data;
 
+@Data
+public class CancelOrderReq {
+	private Long orderId;
 }
