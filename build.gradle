@@ -60,20 +60,41 @@ dependencies {
 
     // 외부 인증용 카카오, 구글,  네이버 등....
     // implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // swagger
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9"
+
+    // 모니터링
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
+def qGenMain = "$buildDir/generated/sources/annotationProcessor/java/main"
+def qGenTest = "$buildDir/generated/sources/annotationProcessor/java/test"
 
 sourceSets {
-
     main {
         java {
-            srcDirs = ["$projectDir/src/main/java", "$projectDir/build/generated"]
+            // 기본 src 유지 + Q 클래스 생성 폴더만 추가
+            srcDirs = ["$projectDir/src/main/java"]
+            srcDirs += [qGenMain]
+        }
+    }
+    test {
+        java {
+            // 테스트에서 QueryDSL 쓰는 경우에만 유지. 아니면 이 줄 삭제 가능
+            srcDirs += [qGenTest]
         }
     }
 }
 
-compileJava.dependsOn('clean')
+// Q 클래스만 부분 청소
+tasks.register('cleanQMain', Delete) { delete qGenMain }
+tasks.register('cleanQTest', Delete) { delete qGenTest }
+
+// 컴파일 전 Q 삭제 → 재생성 유도
+tasks.named('compileJava') { dependsOn 'cleanQMain' }
+tasks.named('compileTestJava') { dependsOn 'cleanQTest' }
