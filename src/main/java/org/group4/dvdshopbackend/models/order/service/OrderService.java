@@ -13,15 +13,16 @@ import org.group4.dvdshopbackend.models.order.dto.getOrderList.GetOrderListReq;
 import org.group4.dvdshopbackend.models.order.dto.getOrderList.GetOrderListRes;
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderReq;
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderRes;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
 
 	// 1. 주문 추가
-	SendOrderRes sendOrder(SendOrderReq req);
+	SendOrderRes sendOrder(Long userId, SendOrderReq req);
 
 	// 2. 주문 이력 목록 조회
-	GetOrderListRes getOrderList(GetOrderListReq req);
+	GetOrderListRes getOrderList(Long userId, Pageable pageable);
 
 	// 3. 주문 취소
-	CancelOrderRes cancelOrder(Long orderId);
+	CancelOrderRes cancelOrder(Long userId, Long orderId);
 }

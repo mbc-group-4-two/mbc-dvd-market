@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @Builder
 public class RemoveItemRes {
-	Long deletedItemId;
+	Long deletedCartItemId;
 }

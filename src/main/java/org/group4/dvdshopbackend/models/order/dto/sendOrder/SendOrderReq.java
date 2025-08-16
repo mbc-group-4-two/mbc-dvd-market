@@ -6,6 +6,5 @@ import java.util.List;
 
 @Data
 public class SendOrderReq {
-	private String memberEmail;
 	private List<SendOrderReqOrderItemInfo> orderItemInfos;
 }

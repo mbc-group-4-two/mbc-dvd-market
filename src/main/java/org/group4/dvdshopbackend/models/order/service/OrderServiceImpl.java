@@ -5,9 +5,12 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.group4.dvdshopbackend.common.entity.Cart;
+import org.group4.dvdshopbackend.common.entity.Member;
 import org.group4.dvdshopbackend.common.entity.Order;
 import org.group4.dvdshopbackend.common.entity.OrderItem;
 import org.group4.dvdshopbackend.common.enums.OrderStatus;
+import org.group4.dvdshopbackend.core.api.PagedRes;
+import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListRes;
 import org.group4.dvdshopbackend.models.cart.repository.CartItemRepository;
 import org.group4.dvdshopbackend.models.cart.repository.CartRepository;
 import org.group4.dvdshopbackend.models.item.dto.repository.ItemImgRepository;
@@ -24,18 +27,23 @@ import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderReqOrderIte
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderRes;
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderResOrderItemInfo;
 import org.group4.dvdshopbackend.models.order.repository.OrderRepository;
+import org.group4.dvdshopbackend.models.order.repository.querydsl.OrderItemQueryRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-	private static final Logger log = LogManager.getLogger(OrderServiceImpl.class);
 	private final MemberJpaRepository memberJpaRepository;
 	private final ItemRepository itemRepository;
 	private final OrderRepository orderRepository;
@@ -43,151 +51,117 @@ public class OrderServiceImpl implements OrderService {
 	private final CartItemRepository cartItemRepository;
 	private final ItemImgRepository itemImgRepository;
 
-	@Override
-	@Transactional
-	public SendOrderRes sendOrder(SendOrderReq req) {
+	private final OrderItemQueryRepository orderItemQueryRepository;
 
-		// 1. 오더 생성
+
+
+	private Order createOrder(Long memberId, List<SendOrderReqOrderItemInfo> orderItemInfos) {
 		var newOrder = new Order();
-		newOrder.setOrderDate(LocalDateTime.now());
-		newOrder.setOrderStatus(OrderStatus.ORDER);
 
-		// 2. 멤버 조회 및 오더에 정보 추가
-		var memberEmail = req.getMemberEmail();
-		var member = memberJpaRepository.findByEmailAndDeletedYn(memberEmail, "N")
-				.orElseThrow();
-		newOrder.setMember(member);
+		// 오더에 주문자정보 추가
+		newOrder.setMember(memberJpaRepository.findById(memberId)
+				.orElseThrow());
 
-		// 3. 아이템 목록 조회 및 오더에 정보 추가
-		var orderItemList = new ArrayList<OrderItem>();
-
-		// total price
-		int totalPrice = 0;
-
-		for (var orderItemInfo : req.getOrderItemInfos()) {
-			var itemId = orderItemInfo.getItemId();
-
-			var item = itemRepository.findById(itemId)
+		// 구매한 아이템 개수대로 item 조회하여 정보(item 조인, 가격, 개수) 조합
+		for (var orderItemInfo : orderItemInfos) {
+			var item = itemRepository.findById(orderItemInfo.getItemId())
 					.orElseThrow();
 
-			var buyCount = orderItemInfo.getCount();
-			var buyPrice = item.getPrice();
-			totalPrice += (buyPrice * buyCount);
-
-			orderItemList.add(OrderItem.builder()
+			var newOrderItem = OrderItem.builder()
 					.item(item)
-					.count(buyCount)
-					.orderPrice(buyPrice)
-					.build());
+					.orderPrice(item.getPrice())
+					.count(orderItemInfo.getCount())
+					.build();
 
-			// 아이템 개수 판매 반영하기
-			item.onOrderEvent(buyCount);
+			// 아이템 주문 개수만큼 차감
+			item.onOrderEvent(orderItemInfo.getCount());
 
-			itemRepository.save(item);
-		}
+			// 오더에 해당 정보 추가
+			newOrder.addOrderItem(newOrderItem);
 
-		// newOrder에 orderItem Attach
-		orderItemList.forEach(newOrder::addOrderItem);
+			// 오더 상태 변경
+			newOrder.setOrderStatus(OrderStatus.ORDER);
 
-		// newOrder Insert
-		var order = orderRepository.save(newOrder);
+			// 오더 주문 체결일자 변경
+			newOrder.setOrderDate(LocalDateTime.now());
 
 
-		// 4. 카트에 해당 아이템 비우기
-		// 카트 Id 가져오기
-		var cart = cartRepository.findByMemberId(member.getId());
-
-		if (cart == null) {
-			var generateCart = new Cart();
-			generateCart.setMember(member);
-			cart = cartRepository.save(generateCart);
-		}
-
-		for (var item : orderItemList) {
+			// 카트에 해당 아이템 카운트만큼 비워주기
+			var cart = cartRepository.findByMemberId(memberId);
 			cartItemRepository.deleteByCartIdAndItemId(cart.getId(), item.getId());
 		}
 
-		// Response에 표시될 데이터
-		var orderItemInfoList = new ArrayList<SendOrderResOrderItemInfo>();
-		for (OrderItem orderItem : order.getOrderItems()) {
-			var orderItemInfo = SendOrderResOrderItemInfo.builder()
-					.itemId(orderItem.getItem().getId())
-					.itemName(orderItem.getItem().getItemNm())
-					.itemPrice(orderItem.getItem().getPrice())
-					.buyCount(orderItem.getCount())
-					.build();
+		return newOrder;
+	}
 
-			orderItemInfoList.add(orderItemInfo);
-		}
+	private List<Order> findOrders(Long userId) {
+		return orderRepository.findAllByMemberId(userId);
+	}
+
+	@Override
+	@Transactional
+	public SendOrderRes sendOrder(Long userId, SendOrderReq req) {
+
+		// 1. 오더정보 생성
+		var newOrder = createOrder(userId, req.getOrderItemInfos());
+
+		// 2. 오더 저장
+		var order = orderRepository.save(newOrder);
 
 		return SendOrderRes.builder()
 				.orderId(order.getId())
-				.orderItemInfos(orderItemInfoList)
-				.totalPrice(totalPrice)
 				.build();
 	}
 
 	@Override
-	public GetOrderListRes getOrderList(GetOrderListReq req) {
+	public GetOrderListRes getOrderList(Long userId, Pageable pageable) {
 
-		// 1. 멤버 조회
-		var memberEmail = req.getMemberEmail();
-		var member = memberJpaRepository.findByEmailAndDeletedYn(memberEmail, "N")
-				.orElseThrow();
+		var orderPageResult = orderRepository.findAllByMemberId(userId, pageable);
 
-		// 2. 오더 목록 조회
-		var orders = orderRepository.findAllByMemberId(member.getId());
+		// order Page 에서 orderId만 list 추출
+		var orderIds = orderPageResult.getContent().stream()
+				.map(Order::getId).toList();
 
-		if (orders.isEmpty()) {
-			return GetOrderListRes.builder()
-					.orderInfos(null)
+		// 각 주문 별 주문정보 join query
+		var orderItemInfos = orderItemQueryRepository.getOrderItemInfos(orderIds);
+
+		Map<Long, List<GetOrderListResOrderItemInfo>> itemsMap = new HashMap<>();
+		Map<Long, Integer> totalMap = new HashMap<>();
+
+		for (var orderItemInfo : orderItemInfos) {
+			var item = GetOrderListResOrderItemInfo.builder()
+					.itemName(orderItemInfo.getItemName())
+					.itemPrice(orderItemInfo.getItemPrice())
+					.buyCount(orderItemInfo.getBuyCount())
+					.itemImgUrl(orderItemInfo.getItemImgUrl())
 					.build();
+			itemsMap.computeIfAbsent(orderItemInfo.getOrderId(), k -> new ArrayList<>()).add(item);
+			totalMap.merge(orderItemInfo.getOrderId(), orderItemInfo.getItemPrice() * orderItemInfo.getBuyCount(), Integer::sum);
 		}
 
-		// response 표시하기 위한 데이터
-		var orderInfos = new ArrayList<GetOrderListResOrderInfo>();
-
-		// 각 주문 당
-		for (Order order : orders) {
-
-			var orderItems = order.getOrderItems();
-
-			List<GetOrderListResOrderItemInfo> itemInfos = new ArrayList<>();
-			int totalPrice = 0;
-
-			for (var orderItem : orderItems) {
-
-				var buyCount = orderItem.getCount();
-				var price = orderItem.getOrderPrice();
-				totalPrice += (price * buyCount);
-
-				var item = orderItem.getItem();
-				var itemImg = itemImgRepository.findByItemIdAndRepimgYn(item.getId(), "Y");
-				var itemInfo = new GetOrderListResOrderItemInfo();
-				itemInfo.setItemName(item.getItemNm());
-				itemInfo.setItemPrice(item.getPrice());
-				itemInfo.setBuyCount(orderItem.getCount());
-				itemInfo.setItemImgUrl(itemImg.getImgUrl());
-				itemInfos.add(itemInfo);
-			}
-
+		List<GetOrderListResOrderInfo> content = new ArrayList<>();
+		for (Order o : orderPageResult.getContent()) {
 			var orderInfo = GetOrderListResOrderInfo.builder()
-					.itemInfos(itemInfos)
-					.totalPrice(totalPrice)
-					.buyDate(order.getOrderDate())
-					.orderStatus(order.getOrderStatus())
+					.orderId(o.getId())
+					.itemInfos(itemsMap.getOrDefault(o.getId(), List.of()))
+					.totalPrice(totalMap.getOrDefault(o.getId(), 0))
+					.buyDate(o.getOrderDate())
+					.orderStatus(o.getOrderStatus())
 					.build();
-			orderInfos.add(orderInfo);
+			content.add(orderInfo);
 		}
+
+		Page<GetOrderListResOrderInfo> orderPage =
+				new PageImpl<>(content, pageable, orderPageResult.getTotalElements());
 
 		return GetOrderListRes.builder()
-				.orderInfos(orderInfos)
+				.orderPage(new PagedRes<>(orderPage))
 				.build();
 	}
 
 	@Override
 	@Transactional
-	public CancelOrderRes cancelOrder(Long orderId) {
+	public CancelOrderRes cancelOrder(Long userId, Long orderId) {
 
 		// 1. 오더 조회
 		var order = orderRepository.findById(orderId)

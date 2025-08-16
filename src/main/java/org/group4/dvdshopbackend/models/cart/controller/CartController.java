@@ -1,18 +1,18 @@
 package org.group4.dvdshopbackend.models.cart.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.group4.dvdshopbackend.core.api.ApiResponse;
 import org.group4.dvdshopbackend.core.api.ApiResult;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemReq;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemRes;
-import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListReq;
 import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListRes;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartReq;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartRes;
-import org.group4.dvdshopbackend.models.cart.dto.removeAllItems.RemoveAllItemsReq;
-import org.group4.dvdshopbackend.models.cart.dto.removeAllItems.RemoveAllItemsRes;
-import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemReq;
-import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemRes;
 import org.group4.dvdshopbackend.models.cart.service.CartService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,47 +23,58 @@ public class CartController {
 	private final CartService cartService;
 
 	// 1. 장바구니에 아이템 등록
-	@PostMapping("/carts")
-	ApiResult<AddItemRes> addItem(@RequestBody AddItemReq req) {
+	@PostMapping("/items")
+	ResponseEntity<ApiResult<AddItemRes>> addCartItem(@RequestBody AddItemReq req,
+	                                                  @AuthenticationPrincipal Long userId) {
+		var res = cartService.addCartItem(userId, req);
 
-		var res = cartService.addItem(req);
-
-		return new ApiResult<>(res);
+		return ApiResponse.created(res);
 	}
 
 	// 2. 장바구니 아이템 목록 조회
-	@GetMapping("/carts")
-	ApiResult<GetCartListRes> getCartList(@RequestBody GetCartListReq req) {
+	@GetMapping("/items")
+	ResponseEntity<ApiResult<GetCartListRes>> getCartItems(
+			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
+			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
+			@AuthenticationPrincipal Long userId) {
 
-		var res = cartService.getCartList(req);
+		var pageable = PageRequest.of(page - 1, size, Sort.by("updateTime").descending());
 
-		return new ApiResult<>(res);
+		var res = cartService.getCartItems(userId, pageable);
+
+		return ApiResponse.ok(res);
 	}
 
+
+
 	// 3. 장바구니 아이템 추가/빼기
-	@PutMapping("/carts/items/{itemId}")
-	ApiResult<ModifyCartRes> modifyItem(@PathVariable Long itemId, @RequestBody ModifyCartReq req) {
+	@PutMapping("/items/{cartItemId}")
+	ResponseEntity<ApiResult<ModifyCartRes>> modifyCartItem(@PathVariable Long cartItemId,
+	                                        @RequestBody ModifyCartReq req,
+	                                        @AuthenticationPrincipal Long userId) {
 
-		var res = cartService.modifyCart(itemId, req);
+		var res = cartService.modifyCartItem(userId, cartItemId, req);
 
-		return new ApiResult<>(res);
+		return ApiResponse.ok(res);
 	}
 
 	// 4. 장바구니 아이템 삭제
-	@DeleteMapping("/carts/items/{itemId}")
-	ApiResult<RemoveItemRes> removeItem(@PathVariable Long itemId) {
+	@DeleteMapping("/items/{cartItemId}")
+	ResponseEntity<ApiResult<Void>> removeCartItem(@PathVariable Long cartItemId,
+	                                        @AuthenticationPrincipal Long userId) {
 
-		var res = cartService.removeItem(itemId);
+		cartService.removeCartItem(userId, cartItemId);
 
-		return new ApiResult<>(res);
+		return ApiResponse.noContent();
 	}
 
 	// 5. 장바구니 아이템 비우기 (전체 삭제)
-	@DeleteMapping("/carts/{cartId}")
-	ApiResult<RemoveAllItemsRes> removeAllItems(@PathVariable Long cartId) {
+	@DeleteMapping("/items")
+	ResponseEntity<ApiResult<Void>> removeAllCartItems(
+			@AuthenticationPrincipal Long userId) {
 
-		var res = cartService.removeAllItemsRes(cartId);
+		cartService.removeAllCartItems(userId);
 
-		return new ApiResult<>(res);
+		return ApiResponse.noContent();
 	}
 }
