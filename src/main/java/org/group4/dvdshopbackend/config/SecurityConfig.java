@@ -1,7 +1,12 @@
 package org.group4.dvdshopbackend.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
+import org.group4.dvdshopbackend.security.jwt.JwtAuthFilter;
+import org.group4.dvdshopbackend.security.jwt.JwtProvider;
+import org.group4.dvdshopbackend.security.jwt.config.JwtProperties;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,10 +18,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import org.springframework.web.cors.CorsConfiguration;
@@ -28,40 +35,82 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
+//    /**
+//     * [인증, 인가]
+//     * CSRF 인증 방식 = 브라우저 쿠키/세션 기반
+//     * @param http
+//     * @return
+//     * @throws Exception
+//     */
+//    @Bean
+//    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//
+//        boolean isDisable = true;
+//
+//        if (isDisable) {
+//            http.csrf(AbstractHttpConfigurer::disable)
+//
+//                    .authorizeHttpRequests(auth -> auth
+//                            .requestMatchers(HttpMethod.POST, "/api/member/members").permitAll()
+//                            .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
+//                            .requestMatchers("/api/item/**", "/images/**").permitAll()
+//                            .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+//                            .anyRequest().permitAll()
+//                    );
+//            return http.build();
+//        } else {
+//            // 1) CSRF ON: 쿠키로 토큰 발급(프론트/포스트맨은 헤더 X-XSRF-TOKEN로 전송)
+//            http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+//
+//                    // 2) 경로 권한: 로그인/로그아웃, 공개 리소스만 열고 나머지는 보호
+//                    .authorizeHttpRequests(auth -> auth
+//                            .requestMatchers("/api/login/**", "/api/member/members", "/api/item/**", "/images/**").permitAll()
+//                            .anyRequest().authenticated()
+//                    )
+//
+//                    // 3) 폼/베이직 비활성(우리는 JSON 로그인 사용)
+//                    .formLogin(AbstractHttpConfigurer::disable)
+//                    .httpBasic(AbstractHttpConfigurer::disable);
+//            return http.build();
+//        }
+//    }
+
+    /**
+     * [인증, 인가]
+     * JWT + Bearer Token ( JWT는 세션을 쓰지않고 클라이언트에서 토큰을 들고 api 호출시마다 토큰을 보낸다. 모바일앱에서 사용하는 api 혹은 MSA 개발시 사용된다 )
+     *
+     * @param http
+     * @param jwt
+     * @return
+     * @throws Exception
+     */
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwt) throws Exception {
 
-        boolean isDisable = true;
+        http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> {
+                    sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                })
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
+                                    "/images/**", "/api/item/**", "/api/member/**", "/api/login/**").permitAll()
+                            .anyRequest()
+                            .authenticated();
+                })
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .exceptionHandling(e ->  {
+                    e.authenticationEntryPoint((req, res, ex) -> {
+                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                    });
+                })
+                .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class);
 
-        if (isDisable) {
-            http.csrf(AbstractHttpConfigurer::disable)
-                    .authorizeHttpRequests(auth -> auth
-                            .requestMatchers(HttpMethod.POST, "/api/member/members").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
-                            .requestMatchers("/api/item/**", "/images/**").permitAll()
-                            .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                            .anyRequest().permitAll()
-                    );
-            return http.build();
-        } else {
-            // 1) CSRF ON: 쿠키로 토큰 발급(프론트/포스트맨은 헤더 X-XSRF-TOKEN로 전송)
-            http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-
-                    // 2) 경로 권한: 로그인/로그아웃, 공개 리소스만 열고 나머지는 보호
-                    .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/api/login/**", "/api/member/members", "/api/item/**", "/images/**").permitAll()
-                            .anyRequest().authenticated()
-                    )
-
-                    // 3) 폼/베이직 비활성(우리는 JSON 로그인 사용)
-                    .formLogin(AbstractHttpConfigurer::disable)
-                    .httpBasic(AbstractHttpConfigurer::disable);
-            return http.build();
-        }
+        return http.build();
     }
-
 
 
 //    @Bean
@@ -138,6 +187,12 @@ public class SecurityConfig {
         return source;
 
     }
+
+    @Bean
+    JwtAuthFilter jwtAuthFilter(JwtProvider jwt) { // JwtProvider는 @Component
+        return new JwtAuthFilter(jwt);
+    }
+
 }
 
 

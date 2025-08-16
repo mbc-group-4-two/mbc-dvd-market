@@ -6,7 +6,7 @@ import org.group4.dvdshopbackend.core.BaseEntity;
 
 @Entity
 @Getter @Setter
-@Builder
+@Builder // 빌더 땜에 빌드할때 경고뜸
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItem extends BaseEntity {

@@ -7,7 +7,4 @@ import lombok.Data;
 @Builder
 public class AddItemRes {
 	private Long cartItemId;
-	private Long cartId;
-	private Long itemId;
-	private int itemCount;
 }

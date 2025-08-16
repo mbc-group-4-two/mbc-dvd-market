@@ -3,21 +3,20 @@ package org.group4.dvdshopbackend.models.cart.service;
 import lombok.RequiredArgsConstructor;
 import org.group4.dvdshopbackend.common.entity.Cart;
 import org.group4.dvdshopbackend.common.entity.CartItem;
+import org.group4.dvdshopbackend.core.api.PagedRes;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemReq;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemRes;
-import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListReq;
 import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListRes;
 import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListResItemDetail;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartReq;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartRes;
-import org.group4.dvdshopbackend.models.cart.dto.removeAllItems.RemoveAllItemsRes;
-import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemReq;
-import org.group4.dvdshopbackend.models.cart.dto.removeItem.RemoveItemRes;
 import org.group4.dvdshopbackend.models.cart.repository.CartItemRepository;
 import org.group4.dvdshopbackend.models.cart.repository.CartRepository;
+import org.group4.dvdshopbackend.models.cart.repository.querydsl.CartItemQueryRepository;
 import org.group4.dvdshopbackend.models.item.dto.repository.ItemImgRepository;
 import org.group4.dvdshopbackend.models.item.dto.repository.ItemRepository;
 import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,136 +26,84 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
+	private final MemberJpaRepository memberJpaRepository;
+
 	private final CartRepository cartRepository;
 	private final CartItemRepository cartItemRepository;
+	private final CartItemQueryRepository cartItemQueryRepository; // Query DSL
 
-	private final MemberJpaRepository memberJpaRepository;
 	private final ItemRepository itemRepository;
-	private final ItemImgRepository itemImgRepository;
 
-	@Override
-	@Transactional
-	public AddItemRes addItem(AddItemReq req) {
-		var memberEmail = req.getMemberEmail();
-		var itemId = req.getItemId();
-
-		// 1. 멤버 조회
-		var member = memberJpaRepository.findByEmailAndDeletedYn(memberEmail, "N")
-				.orElseThrow();
-
-		// 2. item 조회
-		var item = itemRepository.findById(itemId)
-				.orElseThrow();
-
-
-
-		// 3. 카트 조회 후 없으면 생성
-		var cart = cartRepository.findByMemberId(member.getId());
+	/**
+	 * 카트 조회 + 없는경우 생성
+	 * @param memberId
+	 * @return Cart
+	 */
+	private Cart findCart(Long memberId) {
+		var cart = cartRepository.findByMemberId(memberId);
 
 		if (cart == null) {
+			var member = memberJpaRepository.findById(memberId)
+					.orElseThrow();
 			var newCart = new Cart();
 			newCart.setMember(member);
-
 			cart = cartRepository.save(newCart);
 		}
 
-		// 3. cart item 추가
-		// cart ID + item ID로 cart 조회
+		return cart;
+	}
 
-		CartItem cartItem = null;
-		var cartItemResult = cartItemRepository.findCartItemByCartIdAndItemId(cart.getId(), item.getId());
+	/**
+	 * 카트의 장바구니아이템 조회
+	 * @param cartId
+	 * @param itemId
+	 * @return null or CartItem
+	 */
+	private CartItem findCartItem(Long cartId, Long itemId) {
+		var cartItemResult = cartItemRepository.findCartItemByCartIdAndItemId(cartId, itemId);
+		return cartItemResult.isEmpty() ? null : cartItemResult.orElseThrow();
+	}
 
-		if (cartItemResult.isEmpty()) {
-			// 추가
+	@Override
+	@Transactional
+	public AddItemRes addCartItem(Long memberId, AddItemReq req) {
+		var cart = findCart(memberId);
+		var cartItem = findCartItem(cart.getId(), req.getItemId());
+
+		if (cartItem == null) { // 새 아이템 추가
+			var item = itemRepository.findById(req.getItemId())
+					.orElseThrow();
+
 			cartItem = new CartItem();
 			cartItem.setCart(cart);
 			cartItem.setItem(item);
 			cartItem.setCount(req.getItemCount());
 			cartItemRepository.save(cartItem);
-		} else {
-			// 수정
-			cartItem = cartItemResult.orElseThrow();
-      
+
+		} else { // 기존 아이템 수정
 			cartItem.setCount(cartItem.getCount() + req.getItemCount());
 		}
 
 		return AddItemRes.builder()
 				.cartItemId(cartItem.getId())
-				.cartId(cart.getId())
-				.itemId(itemId)
-				.itemCount(cartItem.getCount())
 				.build();
 	}
 
 	@Override
 	@Transactional
-	public GetCartListRes getCartList(GetCartListReq req) {
-		String memberEmail = req.getMemberEmail();
-
-		// 1. 멤버 조회
-		var member = memberJpaRepository.findByEmailAndDeletedYn(memberEmail, "N")
-				.orElseThrow();
-
-		// 2. 카트 조회
-		var cart = cartRepository.findByMemberId(member.getId());
-
-		if (cart == null) {
-			var newCart = new Cart();
-			newCart.setMember(member);
-
-			cart = cartRepository.save(newCart);
-		}
-
-		// 3. 카트 아이템 목록 조회
-
-
-		var itemDetails = new ArrayList<GetCartListResItemDetail>();
-		Long cartId = cart.getId(); // api 호출 멤버의 cart id
-		var cartItemResult = cartItemRepository.findAllByCartId(cartId);
-
-		// 카트에 아이템 없는 경우
-		if (cartItemResult.isEmpty()) {
-			return GetCartListRes.builder()
-					.itemDetails(null)
-					.build();
-
-		} else {
-			// 카트에 아이템 있는 경우
-			cartItemResult.forEach(cartItem -> {
-				var cartItemId = cartItem.getId();
-
-				var item = itemRepository.findById(cartItemId)
-						.orElseThrow();
-
-				var itemImgResult = itemImgRepository.findByItemIdAndRepimgYn(item.getId(), "Y");
-
-				String itemImgUrl = "";
-
-				if (itemImgResult != null) {
-					itemImgUrl = itemImgResult.getImgUrl();
-				}
-
-				var itemDetail = GetCartListResItemDetail.builder()
-						.cartItemId(cartItemId)
-						.itemName(item.getItemNm())
-						.price(item.getPrice())
-						.count(cartItem.getCount())
-						.imgUrl(itemImgUrl)
-						.build();
-				itemDetails.add(itemDetail);
-			});
-		}
+	public GetCartListRes getCartItems(Long memberId, Pageable pageable) {
+		var cart = findCart(memberId);
+		var cartItemPage = cartItemQueryRepository.getPageCartItem(cart.getId(), pageable);
 
 		return GetCartListRes.builder()
-				.itemDetails(itemDetails)
+				.cartPage(new PagedRes<>(cartItemPage))
 				.build();
 	}
 
 	@Override
 	@Transactional
-	public ModifyCartRes modifyCart(Long itemId, ModifyCartReq req) {
-
-		var cartItem = cartItemRepository.findById(itemId)
+	public ModifyCartRes modifyCartItem(Long memberId, Long cartItemId, ModifyCartReq req) {
+		var cartItem = cartItemRepository.findById(cartItemId)
 				.orElseThrow();
 
 		cartItem.setCount(req.getItemCount());
@@ -168,23 +115,14 @@ public class CartServiceImpl implements CartService {
 	}
 
 	@Override
-	public RemoveItemRes removeItem(Long itemId) {
-		cartItemRepository.deleteById(itemId);
-
-		return RemoveItemRes.builder()
-				.deletedItemId(itemId)
-				.build();
+	public void removeCartItem(Long memberId, Long cartItemId) {
+		cartItemRepository.deleteById(cartItemId);
 	}
 
 	@Override
 	@Transactional
-	public RemoveAllItemsRes removeAllItemsRes(Long cartId) {
-
-		cartItemRepository.deleteAllByCartId(cartId);
-
-		return RemoveAllItemsRes.builder()
-				.deletedCartId(cartId)
-				.build();
+	public void removeAllCartItems(Long memberId) {
+		var cart = findCart(memberId);
+		cartItemRepository.deleteAllByCartId(cart.getId());
 	}
-
 }

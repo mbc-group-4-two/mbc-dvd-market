@@ -12,10 +12,5 @@ import java.util.List;
 @Builder
 @JsonPropertyOrder({ "orderId", "orderItemInfos", "totalPrice" })
 public class SendOrderRes {
-//	private Order order;
-//	private List<OrderItem> orderItems;
-
 	private Long orderId;
-	private List<SendOrderResOrderItemInfo> orderItemInfos;
-	private int totalPrice;
 }
