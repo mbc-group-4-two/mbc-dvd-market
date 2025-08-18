@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtProvider {
@@ -24,7 +26,8 @@ public class JwtProvider {
 	public String generateAccessToken(Long userId) {
 		long now = System.currentTimeMillis();
 		return Jwts.builder()
-				.setSubject(String.valueOf(userId))
+//				.setSubject(String.valueOf(userId))
+				.setClaims(Map.of("userId", userId))
 				.setIssuedAt(new Date(now))
 				.setExpiration(new Date(now + expireMs))
 				.signWith(key, SignatureAlgorithm.HS256)
@@ -45,6 +48,7 @@ public class JwtProvider {
 	}
 
 	public Long getUserId(String token) {
-		return Long.valueOf(parse(token).getBody().getSubject());
+		return parse(token).getBody().get("userId", Long.class);
+//		return Long.valueOf(parse(token).getBody().getSubject());
 	}
 }
