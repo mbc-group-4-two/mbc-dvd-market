@@ -24,8 +24,8 @@ public class CartController {
 
 	// 1. 장바구니에 아이템 등록
 	@PostMapping("/items")
-	ResponseEntity<ApiResult<AddItemRes>> addCartItem(@RequestBody AddItemReq req,
-	                                                  @AuthenticationPrincipal Long userId) {
+	ResponseEntity<?> addCartItem(@RequestBody AddItemReq req,
+	                              @AuthenticationPrincipal Long userId) {
 		var res = cartService.addCartItem(userId, req);
 
 		return ApiResponse.created(res);
@@ -33,7 +33,7 @@ public class CartController {
 
 	// 2. 장바구니 아이템 목록 조회
 	@GetMapping("/items")
-	ResponseEntity<ApiResult<GetCartListRes>> getCartItems(
+	ResponseEntity<?> getCartItems(
 			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
 			@AuthenticationPrincipal Long userId) {
@@ -46,12 +46,11 @@ public class CartController {
 	}
 
 
-
 	// 3. 장바구니 아이템 추가/빼기
 	@PutMapping("/items/{cartItemId}")
-	ResponseEntity<ApiResult<ModifyCartRes>> modifyCartItem(@PathVariable Long cartItemId,
-	                                        @RequestBody ModifyCartReq req,
-	                                        @AuthenticationPrincipal Long userId) {
+	ResponseEntity<?> modifyCartItem(@PathVariable Long cartItemId,
+	                                 @RequestBody ModifyCartReq req,
+	                                 @AuthenticationPrincipal Long userId) {
 
 		var res = cartService.modifyCartItem(userId, cartItemId, req);
 
@@ -60,8 +59,8 @@ public class CartController {
 
 	// 4. 장바구니 아이템 삭제
 	@DeleteMapping("/items/{cartItemId}")
-	ResponseEntity<ApiResult<Void>> removeCartItem(@PathVariable Long cartItemId,
-	                                        @AuthenticationPrincipal Long userId) {
+	ResponseEntity<?> removeCartItem(@PathVariable Long cartItemId,
+	                                 @AuthenticationPrincipal Long userId) {
 
 		cartService.removeCartItem(userId, cartItemId);
 
@@ -70,7 +69,7 @@ public class CartController {
 
 	// 5. 장바구니 아이템 비우기 (전체 삭제)
 	@DeleteMapping("/items")
-	ResponseEntity<ApiResult<Void>> removeAllCartItems(
+	ResponseEntity<?> removeAllCartItems(
 			@AuthenticationPrincipal Long userId) {
 
 		cartService.removeAllCartItems(userId);

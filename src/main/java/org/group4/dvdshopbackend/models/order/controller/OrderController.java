@@ -25,7 +25,7 @@ public class OrderController {
 
 	// 1. 주문 추가
 	@PostMapping()
-	ResponseEntity<ApiResult<SendOrderRes>> sendOrder(@RequestBody SendOrderReq req,
+	ResponseEntity<?> sendOrder(@RequestBody SendOrderReq req,
 	                                                  @AuthenticationPrincipal Long userId) {
 		var res = orderService.sendOrder(userId, req);
 		return ApiResponse.created(res);
@@ -33,7 +33,7 @@ public class OrderController {
 
 	// 2. 주문 이력 목록 조회
 	@GetMapping()
-	ResponseEntity<ApiResult<GetOrderListRes>> getOrderList(
+	ResponseEntity<?> getOrderList(
 			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
 			@AuthenticationPrincipal Long userId) {
@@ -45,7 +45,7 @@ public class OrderController {
 
 	// 3. 주문 취소
 	@PutMapping("/{orderId}")
-	ResponseEntity<ApiResult<CancelOrderRes>> cancelOrder(@PathVariable Long orderId,
+	ResponseEntity<?> cancelOrder(@PathVariable Long orderId,
 	                                                      @AuthenticationPrincipal Long userId) {
 		var res = orderService.cancelOrder(userId, orderId);
 		return ApiResponse.ok(res);

@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.group4.dvdshopbackend.core.api.ApiError;
+import org.group4.dvdshopbackend.core.api.ApiResponse;
 import org.group4.dvdshopbackend.core.api.ApiResult;
 import org.group4.dvdshopbackend.security.auth.dto.PerformLoginReq;
 import org.group4.dvdshopbackend.security.auth.dto.PerformLoginRes;
@@ -12,6 +13,7 @@ import org.group4.dvdshopbackend.security.auth.service.AuthService;
 import org.group4.dvdshopbackend.security.jwt.JwtProvider;
 import org.group4.dvdshopbackend.security.jwt.config.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +32,7 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/login")
-	public ApiResult<PerformLoginRes> performLogin(@RequestBody PerformLoginReq req) {
+	public ResponseEntity<?> performLogin(@RequestBody PerformLoginReq req) {
 
 		var res = authService.performLogin(req);
 
@@ -40,7 +42,7 @@ public class AuthController {
 		var userId = res.getMemberId();
 		var newToken = jwt.generateAccessToken(userId);
 
-		return new ApiResult<>(PerformLoginRes.builder()
+		return ApiResponse.ok(PerformLoginRes.builder()
 				.accessToken(newToken)
 				.build());
 	}
