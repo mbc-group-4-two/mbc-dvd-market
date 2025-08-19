@@ -15,6 +15,7 @@ import org.group4.dvdshopbackend.security.jwt.config.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,7 @@ public class AuthController {
 	private final JwtProvider jwt;
 	private final AuthService authService;
 
+
 	@PostMapping("/login")
 	public ResponseEntity<?> performLogin(@RequestBody PerformLoginReq req) {
 
@@ -40,10 +42,11 @@ public class AuthController {
 			throw new NoSuchElementException();
 
 		var userId = res.getMemberId();
-		var newToken = jwt.generateAccessToken(userId);
+		var role = res.getMemberRole();
+		var generatedAccessToken = jwt.generateAccessToken(userId, role);
 
 		return ApiResponse.ok(PerformLoginRes.builder()
-				.accessToken(newToken)
+				.accessToken(generatedAccessToken)
 				.build());
 	}
 }
