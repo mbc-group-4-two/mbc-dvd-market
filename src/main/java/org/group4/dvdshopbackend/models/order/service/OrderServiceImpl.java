@@ -49,7 +49,6 @@ public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
 	private final CartRepository cartRepository;
 	private final CartItemRepository cartItemRepository;
-	private final ItemImgRepository itemImgRepository;
 
 	private final OrderItemQueryRepository orderItemQueryRepository;
 
@@ -86,9 +85,6 @@ public class OrderServiceImpl implements OrderService {
 			newOrder.setOrderDate(LocalDateTime.now());
 
 
-			// 카트에 해당 아이템 카운트만큼 비워주기
-			var cart = cartRepository.findByMemberId(memberId);
-			cartItemRepository.deleteByCartIdAndItemId(cart.getId(), item.getId());
 		}
 
 		return newOrder;
@@ -107,6 +103,13 @@ public class OrderServiceImpl implements OrderService {
 
 		// 2. 오더 저장
 		var order = orderRepository.save(newOrder);
+
+		// 3. 카트에 해당 아이템 카운트만큼 비워주기
+		var cart = cartRepository.findByMemberId(userId);
+		for (var orderItem : order.getOrderItems()) {
+			var item = orderItem.getItem();
+			cartItemRepository.deleteByCartIdAndItemId(cart.getId(), item.getId());
+		}
 
 		return SendOrderRes.builder()
 				.orderId(order.getId())

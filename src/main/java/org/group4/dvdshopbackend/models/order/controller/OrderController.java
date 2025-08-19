@@ -10,6 +10,7 @@ import org.group4.dvdshopbackend.models.order.dto.getOrderList.GetOrderListRes;
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderReq;
 import org.group4.dvdshopbackend.models.order.dto.sendOrder.SendOrderRes;
 import org.group4.dvdshopbackend.models.order.service.OrderService;
+import org.group4.dvdshopbackend.security.auth.record.LoginUser;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +27,8 @@ public class OrderController {
 	// 1. 주문 추가
 	@PostMapping()
 	ResponseEntity<?> sendOrder(@RequestBody SendOrderReq req,
-	                                                  @AuthenticationPrincipal Long userId) {
-		var res = orderService.sendOrder(userId, req);
+	                            @AuthenticationPrincipal LoginUser loginUser) {
+		var res = orderService.sendOrder(loginUser.id(), req);
 		return ApiResponse.created(res);
 	}
 
@@ -36,18 +37,18 @@ public class OrderController {
 	ResponseEntity<?> getOrderList(
 			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
-			@AuthenticationPrincipal Long userId) {
+			@AuthenticationPrincipal LoginUser loginUser) {
 		var pageable = PageRequest.of(page - 1, size, Sort.by("orderDate").descending());
 
-		var res = orderService.getOrderList(userId, pageable);
+		var res = orderService.getOrderList(loginUser.id(), pageable);
 		return ApiResponse.ok(res);
 	}
 
 	// 3. 주문 취소
 	@PutMapping("/{orderId}")
 	ResponseEntity<?> cancelOrder(@PathVariable Long orderId,
-	                                                      @AuthenticationPrincipal Long userId) {
-		var res = orderService.cancelOrder(userId, orderId);
+	                              @AuthenticationPrincipal LoginUser loginUser) {
+		var res = orderService.cancelOrder(loginUser.id(), orderId);
 		return ApiResponse.ok(res);
 	}
 }

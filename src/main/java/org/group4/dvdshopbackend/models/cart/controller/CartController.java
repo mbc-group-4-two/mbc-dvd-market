@@ -31,8 +31,8 @@ public class CartController {
 	// 1. 장바구니에 아이템 등록
 	@PostMapping("/items")
 	ResponseEntity<?> addCartItem(@RequestBody AddItemReq req,
-	                              @AuthenticationPrincipal Long userId) {
-		var res = cartService.addCartItem(userId, req);
+	                              @AuthenticationPrincipal LoginUser loginUser) {
+		var res = cartService.addCartItem(loginUser.id(), req);
 
 		return ApiResponse.created(res);
 	}
@@ -59,9 +59,9 @@ public class CartController {
 	@PutMapping("/items/{cartItemId}")
 	ResponseEntity<?> modifyCartItem(@PathVariable Long cartItemId,
 	                                 @RequestBody ModifyCartReq req,
-	                                 @AuthenticationPrincipal Long userId) {
+	                                 @AuthenticationPrincipal LoginUser loginUser) {
 
-		var res = cartService.modifyCartItem(userId, cartItemId, req);
+		var res = cartService.modifyCartItem(loginUser.id(), cartItemId, req);
 
 		return ApiResponse.ok(res);
 	}
@@ -69,9 +69,9 @@ public class CartController {
 	// 4. 장바구니 아이템 삭제
 	@DeleteMapping("/items/{cartItemId}")
 	ResponseEntity<?> removeCartItem(@PathVariable Long cartItemId,
-	                                 @AuthenticationPrincipal Long userId) {
+	                                 @AuthenticationPrincipal LoginUser loginUser) {
 
-		cartService.removeCartItem(userId, cartItemId);
+		cartService.removeCartItem(loginUser.id(), cartItemId);
 
 		return ApiResponse.noContent();
 	}
@@ -79,9 +79,9 @@ public class CartController {
 	// 5. 장바구니 아이템 비우기 (전체 삭제)
 	@DeleteMapping("/items")
 	ResponseEntity<?> removeAllCartItems(
-			@AuthenticationPrincipal Long userId) {
+			@AuthenticationPrincipal LoginUser loginUser) {
 
-		cartService.removeAllCartItems(userId);
+		cartService.removeAllCartItems(loginUser.id());
 
 		return ApiResponse.noContent();
 	}
