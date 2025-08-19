@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class PerformLoginReq {
 	private String userId;
-
+	private String userPassword;
 }

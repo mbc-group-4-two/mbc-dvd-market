@@ -1,6 +1,9 @@
 package org.group4.dvdshopbackend.models.cart.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.group4.dvdshopbackend.common.enums.Role;
 import org.group4.dvdshopbackend.core.api.ApiResponse;
 import org.group4.dvdshopbackend.core.api.ApiResult;
 import org.group4.dvdshopbackend.models.cart.dto.addItem.AddItemReq;
@@ -9,6 +12,8 @@ import org.group4.dvdshopbackend.models.cart.dto.getCartList.GetCartListRes;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartReq;
 import org.group4.dvdshopbackend.models.cart.dto.modifyCart.ModifyCartRes;
 import org.group4.dvdshopbackend.models.cart.service.CartService;
+import org.group4.dvdshopbackend.security.auth.record.LoginUser;
+import org.group4.dvdshopbackend.security.jwt.JwtAuthFilter;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CartController {
 
+	private static final Logger log = LogManager.getLogger(CartController.class);
 	private final CartService cartService;
 
 	// 1. 장바구니에 아이템 등록
@@ -36,11 +42,14 @@ public class CartController {
 	ResponseEntity<?> getCartItems(
 			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
-			@AuthenticationPrincipal Long userId) {
+			@AuthenticationPrincipal LoginUser loginUser) {
+
+		log.info("user id : " + loginUser.getName());
+		log.info("user role : " + loginUser.role());
 
 		var pageable = PageRequest.of(page - 1, size, Sort.by("updateTime").descending());
 
-		var res = cartService.getCartItems(userId, pageable);
+		var res = cartService.getCartItems(loginUser.id(), pageable);
 
 		return ApiResponse.ok(res);
 	}
