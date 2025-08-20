@@ -12,4 +12,5 @@ public class PerformLoginRes {
 	Long memberId;
 	Role memberRole;
 	String accessToken;
+	String refreshToken;
 }

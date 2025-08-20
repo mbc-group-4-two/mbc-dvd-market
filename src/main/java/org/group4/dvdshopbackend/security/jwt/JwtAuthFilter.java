@@ -3,6 +3,7 @@ package org.group4.dvdshopbackend.security.jwt;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.group4.dvdshopbackend.security.auth.record.LoginUser;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,13 +18,10 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
 	private final JwtProvider jwt;
-
-	public JwtAuthFilter(JwtProvider jwt) {
-		this.jwt = jwt;
-	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
@@ -43,26 +41,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				return;
 			}
 
-			Long userId = jwt.getUserId(token);           // sub 또는 claim에서 추출
-			String role = jwt.getRole(token);             // "ROLE_USER" 형태로 추출
+			Long userId = jwt.getUserId(token);
+			String role = jwt.getRole(token);
 
 			List<GrantedAuthority> authorities =
 					AuthorityUtils.createAuthorityList("ROLE_" + role);
 
 			var principal = new LoginUser(userId, role);
 
+			// Token 인증 기반은 credentials 필요 없음 -> null 처리
 			UsernamePasswordAuthenticationToken auth =
 					new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
 			auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
 
 			SecurityContext context = SecurityContextHolder.createEmptyContext();
 			context.setAuthentication(auth);
 
 			SecurityContextHolder.setContext(context);
-
-			chain.doFilter(req, res);
 		} catch (Exception e) {
 			res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 		}
+
+		chain.doFilter(req, res);
 	}
 }

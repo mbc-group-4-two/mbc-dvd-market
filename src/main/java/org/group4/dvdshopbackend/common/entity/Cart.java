@@ -15,7 +15,12 @@ public class Cart extends BaseEntity {
 
     @Id
     @Column(name = "cart_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(
+            name = "cart_seq",
+            sequenceName = "cart_seq_tbl",
+            allocationSize = 1 // sequence 캐싱 처리, 배포시 50정도 -> 병목시 늘리기
+    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_seq")
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)

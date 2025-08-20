@@ -12,13 +12,16 @@ import java.util.Date;
 
 @Component
 public class JwtProvider {
+
 	private final SecretKey key;
 	private final long expireMs;
+	private final long refreshExpireMs;
 
 	public JwtProvider(JwtProperties props) {
 //		this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(props.secret()));
 		this.key = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
 		this.expireMs = props.accessExpireMs();
+		this.refreshExpireMs = props.refreshExpireMs();
 	}
 
 	public String generateAccessToken(Long userId, Role role) {
@@ -29,6 +32,16 @@ public class JwtProvider {
 				.claim("role", role)
 				.setIssuedAt(new Date(now))
 				.setExpiration(new Date(now + expireMs))
+				.signWith(key, SignatureAlgorithm.HS256)
+				.compact();
+	}
+
+	public String generateRefreshToken(Long userId) {
+		long now = System.currentTimeMillis();
+		return Jwts.builder()
+				.setSubject(String.valueOf(userId))
+				.setIssuedAt(new Date(now))
+				.setExpiration(new Date(now + refreshExpireMs))
 				.signWith(key, SignatureAlgorithm.HS256)
 				.compact();
 	}

@@ -29,24 +29,11 @@ import java.util.NoSuchElementException;
 @Log4j2
 public class AuthController {
 
-	private final JwtProvider jwt;
 	private final AuthService authService;
-
 
 	@PostMapping("/login")
 	public ResponseEntity<?> performLogin(@RequestBody PerformLoginReq req) {
-
 		var res = authService.performLogin(req);
-
-		if (res == null)
-			throw new NoSuchElementException();
-
-		var userId = res.getMemberId();
-		var role = res.getMemberRole();
-		var generatedAccessToken = jwt.generateAccessToken(userId, role);
-
-		return ApiResponse.ok(PerformLoginRes.builder()
-				.accessToken(generatedAccessToken)
-				.build());
+		return ApiResponse.ok(res);
 	}
 }

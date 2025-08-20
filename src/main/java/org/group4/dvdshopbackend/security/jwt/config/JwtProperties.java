@@ -8,4 +8,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param accessExpireMs
  */
 @ConfigurationProperties(prefix = "jwt")
-public record JwtProperties(String secret, long accessExpireMs) {}
+public record JwtProperties(
+		String secret,
+		long accessExpireMs,
+		long refreshExpireMs
+) {
+
+}
