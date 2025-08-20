@@ -16,7 +16,12 @@ public class Item extends BaseEntity {
 
     @Id
     @Column(name="item_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(
+            name = "item_seq",
+            sequenceName = "item_seq_tbl",
+            allocationSize = 1 // sequence 캐싱 처리, 배포시 50정도 -> 병목시 늘리기
+    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "item_seq")
     private Long id;
 
     @Column(nullable = false, length = 50)

@@ -16,7 +16,13 @@ import java.util.List;
 @AllArgsConstructor @NoArgsConstructor
 public class Order extends BaseEntity {
 
-    @Id @GeneratedValue
+    @Id
+    @SequenceGenerator(
+            name = "order_seq",
+            sequenceName = "order_seq_tbl",
+            allocationSize = 1 // sequence 캐싱 처리, 배포시 50정도 -> 병목시 늘리기
+    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_seq")
     @Column(name = "order_id")
     private Long id;
 
@@ -31,7 +37,7 @@ public class Order extends BaseEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL
             , orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    private List<OrderItem> orderItems;
 
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);

@@ -22,7 +22,12 @@ public class Member extends BaseEntity {
 
     @Id
     @Column(name="member_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(
+            name = "member_seq",
+            sequenceName = "member_seq_tbl",
+            allocationSize = 1 // sequence 캐싱 처리, 배포시 50정도 -> 병목시 늘리기
+    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_seq")
     private Long id;
 
     private String name;
@@ -39,6 +44,9 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false)
     private String deletedYn;
+
+    @Column(name = "token_version", nullable = false)
+    private Long tokenVersion = 0L;
 
     @PrePersist
     public void prePersist() {

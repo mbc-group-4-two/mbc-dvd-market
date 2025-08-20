@@ -12,7 +12,12 @@ public class ItemImg extends BaseEntity {
 
     @Id
     @Column(name="item_img_id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(
+            name = "item_img_seq",
+            sequenceName = "item_img_seq_tbl",
+            allocationSize = 1 // sequence 캐싱 처리, 배포시 50정도 -> 병목시 늘리기
+    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "item_img_seq")
     private Long id;
 
     private String imgName;
