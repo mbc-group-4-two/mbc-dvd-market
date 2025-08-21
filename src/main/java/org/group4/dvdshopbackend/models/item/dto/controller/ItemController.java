@@ -9,6 +9,7 @@ import org.group4.dvdshopbackend.models.item.dto.service.ItemService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class ItemController {
 
     private final ItemService itemService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = {"multipart/form-data"})
     public ApiResult<Long> createItem(
             @RequestPart("data") ItemFormDto itemFormDto,
@@ -33,6 +35,7 @@ public class ItemController {
         return new ApiResult<>(result);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/{itemId}", consumes = {"multipart/form-data"})
     public ApiResult<Long> updateItem(
             @PathVariable Long itemId,
@@ -43,6 +46,7 @@ public class ItemController {
         return new ApiResult<>(result);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{itemId}")
     public ApiResult<Boolean> deleteItem(@PathVariable Long itemId) {
         itemService.deleteItem(itemId);

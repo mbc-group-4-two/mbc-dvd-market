@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public PerformLoginRes performLogin(PerformLoginReq req) {
 
-		var member = memberJpaRepository.findByEmail(req.getUserId())
+		var member = memberJpaRepository.findByEmailAndDeletedYn(req.getUserId(),"N")
 				.orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
 		if (!passwordEncoder.matches(req.getUserPassword(), member.getPassword()))

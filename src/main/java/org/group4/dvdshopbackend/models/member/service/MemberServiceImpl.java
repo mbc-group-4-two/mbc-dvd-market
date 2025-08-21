@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 
@@ -99,6 +100,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public ModifyMemberRes modifyMember(ModifyMemberReq request) {
 
         var member = memberJpaRepository.findById(request.getId())
@@ -119,15 +121,22 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public DeleteMemberRes deleteMember(DeleteMemberReq request) {
 
-        Member member = memberJpaRepository.findByEmailAndDeletedYn(request.getEmail(), "n")
+        Member member = memberJpaRepository
+                .findByEmailAndDeletedYn(request.getEmail(), "N")
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 이미 삭제된 회원입니다."));
 
-        if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
+        String password = request.getPassword();
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("비밀번호를 입력해주세요.");
+        }
+        if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
+        // 3) 소프트 삭제
         member.setDeletedYn("Y");
 
         return DeleteMemberRes.builder()
