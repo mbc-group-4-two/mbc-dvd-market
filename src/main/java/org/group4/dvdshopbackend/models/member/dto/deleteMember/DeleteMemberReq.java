@@ -13,4 +13,6 @@ public class DeleteMemberReq {
 
     private String password;
 
+    private Long id;
+
 }

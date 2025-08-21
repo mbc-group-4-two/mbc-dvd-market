@@ -34,7 +34,7 @@ public class LoginServiceImpl implements LoginService{
         httpRequest.getSession(true);
 
         // 3) 응답 정보 구성
-        var member = memberJpaRepository.findByEmail(email).orElseThrow();
+        var member = memberJpaRepository.findByEmailAndDeletedYn(email, "N").orElseThrow();
         if ("Y".equalsIgnoreCase(member.getDeletedYn())) throw new IllegalStateException("비활성화된 회원입니다.");
         return LoginRes.builder()
                 .id(member.getId())
