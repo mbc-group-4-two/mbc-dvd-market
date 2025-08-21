@@ -10,17 +10,18 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface MemberJpaRepository extends JpaRepository<Member, Long> {
+
+
     Optional<Member> findByEmailAndDeletedYn(String email, String deletedYn);
+
 
     boolean existsByEmailAndDeletedYn(String email, String deletedYn);
 
 
-    Page<Member> findAll(Pageable pageable);
+    Optional<Member> findByIdAndDeletedYn(Long id, String deletedYn);
+
 
     @Query("select m from Member m where (:includeDeleted = true or m.deletedYn = 'N')")
     Page<Member> searchAll(@Param("includeDeleted") boolean includeDeleted, Pageable pageable);
 
-    Long id(Long id);
-
-    Optional<Member> findByEmail(String memberEmail);
 }

@@ -18,7 +18,7 @@ public class MemberDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // 이메일로 사용자 조회
-        Member member = memberJpaRepository.findByEmail(email)
+        Member member = memberJpaRepository.findByEmailAndDeletedYn(email,"N")
                 .orElseThrow(() -> new UsernameNotFoundException("No user with email: " + email));
 
         // 소프트 딜리트된 계정이면 인증 거부

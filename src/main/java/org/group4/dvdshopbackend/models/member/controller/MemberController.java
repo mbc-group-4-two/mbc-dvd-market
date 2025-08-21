@@ -12,7 +12,11 @@ import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.modifyMember.ModifyMemberRes;
 import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberReq;
 import org.group4.dvdshopbackend.models.member.dto.postMember.PostMemberRes;
+import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
 import org.group4.dvdshopbackend.models.member.service.MemberService;
+import org.group4.dvdshopbackend.security.auth.record.LoginUser;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,77 +26,103 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberJpaRepository memberJpaRepository; // 로그인 id → email 보정용(로그인 정보에 email 없을 수도 있어서)
 
-    // 회원가입
+    /* ===========================
+       1) 회원가입 (누구나)
+       =========================== */
     @PostMapping("/members")
-    public ApiResult<PostMemberRes> postMember(
-            @RequestBody PostMemberReq reqBody) {
-
+    @Transactional
+    public ApiResult<PostMemberRes> postMember(@RequestBody PostMemberReq reqBody) {
         var result = memberService.postMember(reqBody);
-
         return new ApiResult<>(result);
-
     }
 
-    //  회원 목록 보기(관리자용)
+    /* ===========================
+       2) 회원 목록 (ADMIN 전용)
+       =========================== */
     @GetMapping("/members")
-    // @PreAuthorize("hasRole('ADMIN')")
-    @ResponseBody
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResult<GetMemberListRes> getMemberList(
             @RequestParam(name = "page", required = false) Integer page,
-            @RequestParam(name = "size", required = false) Integer size) {
-
+            @RequestParam(name = "size", required = false) Integer size
+    ) {
         page = (page == null || page < 1) ? 1 : page;
         size = (size == null || size < 1) ? 10 : size;
 
-        var reqBody = GetMemberListReq.builder()
+        var req = GetMemberListReq.builder()
                 .page(page)
                 .size(size)
                 .build();
 
-        var result = memberService.getMemberList(reqBody);
-
-        return new ApiResult<>(result);
+        var res = memberService.getMemberList(req);
+        return new ApiResult<>(res);
     }
 
-    // 내정보 보기(일반 유저용)
-    @GetMapping("/members/{memberId}")
-    @ResponseBody
-    @Transactional
-    public ApiResult<GetMemberDetailRes> getMemberDetail(
-            @PathVariable("memberId") Long memberId) {
-
-        var request = GetMemberDetailReq.builder()
-                .id(memberId)
+    /* ===========================
+       3) 내 정보 보기 (로그인 필요)
+       =========================== */
+    @GetMapping("/me")
+    @Transactional(readOnly = true)
+    public ApiResult<GetMemberDetailRes> getMyInfo(@AuthenticationPrincipal LoginUser loginUser) {
+        var req = GetMemberDetailReq.builder()
+                .id(loginUser.id())
                 .build();
 
-        var result = memberService.getMemberDetail(request);
-
-        return new ApiResult<>(result);
+        var res = memberService.getMemberDetail(req);
+        return new ApiResult<>(res);
     }
 
-    // 회원정보 수정하기
-    @PutMapping("/members")
-    @ResponseBody
+    /* ===========================
+       4) 내 정보 수정 (로그인 필요)
+       - address / password
+       =========================== */
+    @PutMapping("/me")
     @Transactional
-    public ApiResult<ModifyMemberRes> modifyMember(
-            @RequestBody ModifyMemberReq request) {
+    public ApiResult<ModifyMemberRes> modifyMyInfo(
+            @RequestBody ModifyMemberReq body,
+            @AuthenticationPrincipal LoginUser loginUser
+    ) {
+        var req = ModifyMemberReq.builder()
+                .id(loginUser.id())            // ★ 반드시 서버에서 본인 id로 덮어쓰기
+                .address(body.getAddress())
+                .password(body.getPassword())
+                .build();
 
-        var result = memberService.modifyMember(request);
-
-        return new ApiResult<>(result);
+        var res = memberService.modifyMember(req);
+        return new ApiResult<>(res);
     }
 
-    // 회원탈퇴
-    @DeleteMapping("/members")
-    @ResponseBody
+    /* ===========================
+       5) 회원 탈퇴 (로그인 필요)
+       - 비밀번호 확인 필수
+       - 이메일은 서버가 주입 (프론트에서 조작 불가)
+       =========================== */
+    @DeleteMapping("/me")
     @Transactional
-    public ApiResult<DeleteMemberRes> deleteMember(
-            @RequestBody DeleteMemberReq request) {
+    public ApiResult<DeleteMemberRes> deleteMe(
+            @AuthenticationPrincipal LoginUser loginUser,
+            @RequestBody DeleteMemberReq body
+    ) {
+        String email = null;
+        try {
+            var emailGetter = LoginUser.class.getMethod("email");
+            Object v = emailGetter.invoke(loginUser);
+            if (v instanceof String ev && !ev.isBlank()) email = ev;
+        } catch (Exception ignore) {}
 
-        var result = memberService.deleteMember(request);
+        if (email == null) {
+            email = memberJpaRepository.findById(loginUser.id())
+                    .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."))
+                    .getEmail();
+        }
 
-        return new ApiResult<>(result);
+        var req = DeleteMemberReq.builder()
+                .email(email)
+                .password(body.getPassword())
+                .build();
+
+        var res = memberService.deleteMember(req);
+        return new ApiResult<>(res);
     }
-
 }
