@@ -7,10 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MemberJpaRepository extends JpaRepository<Member, Long> {
-
 
     Optional<Member> findByEmailAndDeletedYn(String email, String deletedYn);
 
@@ -24,4 +24,8 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
     @Query("select m from Member m where (:includeDeleted = true or m.deletedYn = 'N')")
     Page<Member> searchAll(@Param("includeDeleted") boolean includeDeleted, Pageable pageable);
 
+    Optional<Member> findByEmail(String memberEmail);
+
+    @Query("select m.tokenVersion from Member m where m.id = :id")
+    Long findTokenVersionById(@Param("id") Long id);
 }

@@ -2,6 +2,8 @@ package org.group4.dvdshopbackend.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.group4.dvdshopbackend.models.member.repository.MemberJpaRepository;
+import org.group4.dvdshopbackend.security.RefreshTokenHasher;
+import org.group4.dvdshopbackend.security.TokenGuard;
 import org.group4.dvdshopbackend.security.jwt.JwtAuthFilter;
 import org.group4.dvdshopbackend.security.jwt.JwtProvider;
 import org.group4.dvdshopbackend.security.jwt.config.JwtProperties;
@@ -192,8 +194,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtAuthFilter jwtAuthFilter(JwtProvider jwt) { // JwtProvider는 @Component
-        return new JwtAuthFilter(jwt);
+    JwtAuthFilter jwtAuthFilter(JwtProvider jwt, TokenGuard tokenGuard) { // JwtProvider는 @Component
+        return new JwtAuthFilter(jwt, tokenGuard);
     }
 
 }
