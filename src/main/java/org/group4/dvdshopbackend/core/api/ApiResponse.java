@@ -33,7 +33,7 @@ public final class ApiResponse {
 	 *      noContent 호출한다.
 	 * @return
 	 */
-	public static ResponseEntity<ApiResult<Void>> noContent() {
+	public static ResponseEntity<ApiResult<?>> noContent() {
 		return ResponseEntity.status(204).body(ApiResult.none());
 	}
 }

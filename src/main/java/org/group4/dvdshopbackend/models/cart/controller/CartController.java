@@ -44,7 +44,7 @@ public class CartController {
 			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
 			@AuthenticationPrincipal LoginUser loginUser) {
 
-		log.info("user id : " + loginUser.getName());
+		log.info("user id : " + loginUser.id());
 		log.info("user role : " + loginUser.role());
 
 		var pageable = PageRequest.of(page - 1, size, Sort.by("updateTime").descending());

@@ -1,4 +1,4 @@
-package org.group4.dvdshopbackend.security.auth.dto;
+package org.group4.dvdshopbackend.security.auth.dto.performLogin;
 
 import lombok.Data;
 

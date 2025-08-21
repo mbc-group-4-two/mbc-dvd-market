@@ -49,7 +49,7 @@ public class ApiResult<T> {
 	// api request 성공 했을 때
 	// 돌려줄 조회값이 없는 경우
 	//      none 호출한다.
-	public static ApiResult<Void> none() {
+	public static ApiResult<?> none() {
 		return new ApiResult<>(HttpStatus.NO_CONTENT.value(), "no content", null);
 	}
 }
