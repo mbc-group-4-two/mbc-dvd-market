@@ -61,6 +61,11 @@ public class OrderServiceImpl implements OrderService {
 		newOrder.setMember(memberJpaRepository.findById(memberId)
 				.orElseThrow());
 
+		// 0821 주문 목록에 add 할 때 500 뜨고 안 담겨서...
+		if (newOrder.getOrderItems() == null) {
+			newOrder.setOrderItems(new ArrayList<>());
+		}
+
 		// 구매한 아이템 개수대로 item 조회하여 정보(item 조인, 가격, 개수) 조합
 		for (var orderItemInfo : orderItemInfos) {
 			var item = itemRepository.findById(orderItemInfo.getItemId())
