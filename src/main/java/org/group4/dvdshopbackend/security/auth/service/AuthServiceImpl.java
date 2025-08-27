@@ -30,24 +30,6 @@ public class AuthServiceImpl implements AuthService {
 	private final MemberJpaRepository memberJpaRepository;
 	private final UserRefreshTokensRepository userRefreshTokensRepository;
 
-	/*@Override
-	public PerformLoginRes performLogin(PerformLoginReq req) {
-
-		var member = memberJpaRepository.findByEmailAndDeletedYn(req.getUserId(),"N")
-				.orElseThrow(() -> new UsernameNotFoundException("user not found"));
-
-		if (!passwordEncoder.matches(req.getUserPassword(), member.getPassword()))
-			throw new BadCredentialsException("invalid credentials");
-
-		var generatedAccessToken = jwt.generateAccessToken(member.getId(), member.getRole());
-		var generatedRefreshToken = jwt.generateRefreshToken(member.getId());
-
-		return PerformLoginRes.builder()
-				.accessToken(generatedAccessToken)
-				.refreshToken(generatedRefreshToken)
-				.build();
-	}*/
-
 	/**
 	 * 로그인 시 호출
 	 * member 검증 후
