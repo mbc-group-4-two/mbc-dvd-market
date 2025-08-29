@@ -29,8 +29,6 @@ public class ItemServiceImpl implements ItemService {
     private final ItemImgRepository itemImgRepository;
     private final ItemImgService itemImgService;
 
-    // ItemServiceImpl.java
-
     @Override
     @Transactional(readOnly = true)
     public Page<ItemListRes> getItemPage(int page, int size) {
@@ -51,10 +49,6 @@ public class ItemServiceImpl implements ItemService {
                     .build();
         });
     }
-
-
-
-
 
     @Override
     public Long saveItem(ItemFormDto itemFormDto, List<MultipartFile> itemImgFileList) throws Exception {
@@ -90,8 +84,6 @@ public class ItemServiceImpl implements ItemService {
         List<ItemImgDto> itemImgDtoList = new ArrayList<>();
         for (ItemImg itemImg : itemImgList) {
             ItemImgDto dto = ItemImgDto.of(itemImg);
-            // (필요 시) 엔티티의 repimgYn -> DTO의 repImgYn 수동 보정
-            // dto.setRepImgYn(itemImg.getRepimgYn());
             itemImgDtoList.add(dto);
         }
 
@@ -112,14 +104,12 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(itemFormDto.getId())
                 .orElseThrow(EntityNotFoundException::new);
 
-        // 엔티티에 update 메서드가 없다면 개별 세팅
         item.setItemNm(itemFormDto.getItemNm());
         item.setPrice(itemFormDto.getPrice());
         item.setStockNumber(itemFormDto.getStockNumber());
         item.setItemDetail(itemFormDto.getItemDetail());
         item.setItemSellStatus(itemFormDto.getItemSellStatus());
 
-        // 이미지 교체(폼에서 넘어온 기존 이미지 id 순서와 업로드 파일 순서가 매핑된다고 가정)
         if (itemImgFileList != null && itemFormDto.getItemImgIds() != null) {
             List<Long> itemImgIds = itemFormDto.getItemImgIds();
             int limit = Math.min(itemImgIds.size(), itemImgFileList.size());
@@ -131,7 +121,6 @@ public class ItemServiceImpl implements ItemService {
         }
         return item.getId();
     }
-
 
     @Override
     public void deleteItem(Long itemId) {

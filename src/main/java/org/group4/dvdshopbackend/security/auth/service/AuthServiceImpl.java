@@ -10,18 +10,22 @@ import org.group4.dvdshopbackend.security.auth.dto.refreshToken.RefreshTokenReq;
 import org.group4.dvdshopbackend.security.auth.dto.refreshToken.RefreshTokenRes;
 import org.group4.dvdshopbackend.security.auth.repository.UserRefreshTokensRepository;
 import org.group4.dvdshopbackend.security.jwt.JwtProvider;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+	private final StringRedisTemplate redisTemplate;
 
 	private final JwtProvider jwt;
 	private final PasswordEncoder passwordEncoder;
@@ -111,22 +115,28 @@ public class AuthServiceImpl implements AuthService {
 		var now = LocalDateTime.now();
 		if ( !oldRefreshToken.getExpiresDate().isAfter(now))
 			throw new BadCredentialsException("expired");
-
-
-
+		
 		// 5. 새 토큰 발급
 		var newTokenVersion = member.getTokenVersion(); // 토큰 버전 ++ 됨
-		var newAccessToken = jwt.issueAccessToken(member.getId(), member.getRole(), newTokenVersion);
+		var newAccessToken  = jwt.issueAccessToken(member.getId(), member.getRole(), newTokenVersion);
 		var newRefreshToken = jwt.issueRefreshToken(member.getId(), newTokenVersion);
 
+		// 6. 새 토큰을 Redis로 먼저 보냄
+		// 토큰가드가 redisKey를 먼저 읽게 되어있는데
+		// 계속 옛날 토큰을 읽는 바람에, 버전 미스매치가 계속돼서
+		// Refresh Token이 발급됐다가도 바로 401 뜨고 > RT까지 삭제해버리더라구요
+		// 그런 뒤에는 다시 로그인해도 AT/RT이 발급됐다가도 로그인만 넘기면 바로 실패로 둘 다 사라짐
+		String key = "user:" + userId + ":ver";
+		redisTemplate.opsForValue().set(key, Integer.toString(newTokenVersion), Duration.ofMinutes(10));
+
+		// 7. 기존 RT rotate + 저장
+		var newClaims = jwt.parseRefreshToken(newRefreshToken).getBody();
+		oldRefreshToken.rotate(newClaims.getId());
+		userRefreshTokensRepository.save(oldRefreshToken);
+
+		// 8. 신규 RT 저장
 		var userRefreshToken = jwt.toRefreshTokenEntity(member, newRefreshToken, clientInfo, refreshTokenHasher);
-
-		// 신규 refresh token 저장
 		userRefreshTokensRepository.save(userRefreshToken);
-
-		// 6. 기존 refresh token rotate
-		var newClaims = jwt.parseRefreshToken(newRefreshToken);
-		oldRefreshToken.rotate(newClaims.getBody().getId());
 
 		return RefreshTokenRes.builder()
 				.accessToken(newAccessToken)
@@ -134,3 +144,24 @@ public class AuthServiceImpl implements AuthService {
 				.build();
 	}
 }
+
+/*
+ *   // 5. 새 토큰 발급
+ *     var newTokenVersion = member.getTokenVersion(); // 토큰 버전 ++ 됨
+ *     var newAccessToken = jwt.issueAccessToken(member.getId(), member.getRole(), newTokenVersion);
+ *     var newRefreshToken = jwt.issueRefreshToken(member.getId(), newTokenVersion);
+ *
+ *     var userRefreshToken = jwt.toRefreshTokenEntity(member, newRefreshToken, clientInfo, refreshTokenHasher);
+ *
+ *     // 신규 refresh token 저장
+ *     userRefreshTokensRepository.save(userRefreshToken);
+ *
+ *     // 6. 기존 refresh token rotate
+ *     var newClaims = jwt.parseRefreshToken(newRefreshToken);
+ *     oldRefreshToken.rotate(newClaims.getBody().getId());
+ *
+ *     return RefreshTokenRes.builder()
+ *             .accessToken(newAccessToken)
+ *             .refreshToken(newRefreshToken)
+ *             .build();
+ */

@@ -173,24 +173,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(CorsConfigurationSource cors) {
+    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        // 프론트에서 접속하는 모든 오리진을 등록
         cfg.setAllowedOrigins(List.of(
-                "http://192.168.0.173:3000",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:4000"
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
-        cfg.setAllowedHeaders(List.of("*"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cfg.setAllowCredentials(true);
-        // (필요 시) 노출할 헤더 추가
-        // cfg.setExposedHeaders(List.of("Content-Disposition"));
 
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
-
     }
 
     @Bean
