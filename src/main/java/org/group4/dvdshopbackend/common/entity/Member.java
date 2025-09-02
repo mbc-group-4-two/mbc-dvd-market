@@ -56,12 +56,7 @@ public class Member extends BaseEntity {
 
     }
 
-    public int getSnapTokenVersion() {
-        return tokenVersion.intValue();
-    }
-
     public int getTokenVersion() {
-        tokenVersion++;
         return tokenVersion.intValue();
     }
 }
