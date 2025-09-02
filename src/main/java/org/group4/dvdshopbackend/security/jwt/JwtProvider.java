@@ -96,53 +96,12 @@ public class JwtProvider {
 				.compact();
 	}
 
-
-	public String generateAccessToken(Long userId, Role role) {
-		long now = System.currentTimeMillis();
-		return Jwts.builder()
-				.setAudience("access")
-				.setSubject(String.valueOf(userId))
-//				.setClaims(Map.of("role", role)) // setSubject 를 덮어씀 (주의 필요)
-				.claim("role", role)
-				.setIssuedAt(new Date(now))
-				.setExpiration(new Date(now + accessExpireMs))
-				.signWith(accessKey, SignatureAlgorithm.HS256)
-				.compact();
-	}
-
-	public String generateRefreshToken(Long userId) {
-		long now = System.currentTimeMillis();
-		return Jwts.builder()
-				.setAudience("refresh")
-				.setSubject(String.valueOf(userId))
-				.setIssuedAt(new Date(now))
-				.setExpiration(new Date(now + refreshExpireMs))
-				.signWith(refreshKey, SignatureAlgorithm.HS256)
-				.compact();
-	}
-
 	public Jws<Claims> parseAccessToken(String token) {
 		return Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token);
 	}
 
 	public Jws<Claims> parseRefreshToken(String token) {
 		return Jwts.parserBuilder().setSigningKey(refreshKey).build().parseClaimsJws(token);
-	}
-
-
-	public boolean validateAccessToken(String token) {
-
-		try {
-			parseAccessToken(token);
-		} catch (IllegalArgumentException e) {
-			log.error("an error occurred during getting username from token", e);
-			throw new JwtException("유효하지 않은 토큰");
-		} catch (ExpiredJwtException e) {
-			log.warn("the token is expired and not valid anymore", e);
-			throw new JwtException("토큰 기한 만료");
-		}
-
-		return true;
 	}
 
 	@Deprecated

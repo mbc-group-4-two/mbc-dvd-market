@@ -74,18 +74,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 		try {
 			var claims = jwt.parseAccessToken(token).getBody();
-
-			log.info(" before tokenGuard");
-			// --- 검증 후 거부 throw exception
 			tokenGuard.verify(claims);
-//			// aud == access 아니면 401 리턴
-//			if (!"access".equals(claims.getAudience())) {
-//				res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-//				return;
-//			}
-			log.info(" after tokenGuard");
-
-
 
 			var principal = jwt.getLoginUser(token);
 			var authorities = AuthorityUtils.createAuthorityList("ROLE_" + principal.role());
