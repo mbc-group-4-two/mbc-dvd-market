@@ -30,7 +30,7 @@ public class ItemImgService {
 
         itemImg.setOriImgName(ori);
         itemImg.setImgName(saved);
-        itemImg.setImgUrl("/images/item/" + saved);   // 브라우저 경로(정적 리소스 매핑과 일치)
+        itemImg.setImgUrl("/images/item/" + saved);
 
         itemImgRepository.save(itemImg);
     }
@@ -51,8 +51,7 @@ public class ItemImgService {
 
         img.setOriImgName(ori);
         img.setImgName(saved);
-        img.setImgUrl("/images/item/" + saved);       // 동일 규칙
-        // JPA 더티체킹으로 업데이트 반영
+        img.setImgUrl("/images/item/" + saved);
     }
 
     public void deleteItemImg(Long itemImgId) {
