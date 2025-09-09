@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>PortOne 테스트</title>
+    <!-- port one 라이브러리 -->
+    <script src="https://cdn.iamport.kr/v1/iamport.js" defer></script>
+    <script defer>
+        window.addEventListener('DOMContentLoaded', () => {
+            window.IMP.init('imp85666633'); // V1 가맹점 코드
+            document.getElementById('payBtn').addEventListener('click', requestPay);
+        });
+
+        function requestPay() {
+            const merchantUid = `IMP${Date.now()}`;
+            window.IMP.request_pay({
+                pg: 'html5_inicis.INIpayTest', // inicis 채널 추가할것
+                pay_method: 'card',
+                merchant_uid: merchantUid,
+                name: '당근 10kg',
+                amount: 100,
+                buyer_email: 'Iamport@chai.finance',
+                buyer_name: '아임포트 기술지원팀',
+                buyer_tel: '010-1234-5678',
+                buyer_addr: '서울특별시 강남구 삼성동',
+                buyer_postcode: '123-456',
+                display: {card_quota: [3]}
+            }, function (rsp) {
+                document.getElementById('log').textContent = JSON.stringify(rsp, null, 2);
+                alert(rsp.success ? '결제 성공' : (rsp.error_msg || '결제 실패'));
+            });
+        }
+    </script>
+</head>
+<body>
+<button id="payBtn">결제 요청</button>
+<pre id="log" style="white-space:pre-wrap"></pre>
+</body>
+</html>
