@@ -85,14 +85,4 @@ public class CartController {
 
 		return ApiResponse.noContent();
 	}
-
-	// 2. 장바구니 아이템 목록 조회
-	@GetMapping("/items")
-	ResponseEntity<?> getTest(
-			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
-			@RequestParam(name = "size", defaultValue = "10", required = false) Integer size,
-			@AuthenticationPrincipal LoginUser loginUser) {
-
-		return ApiResponse.ok(res);
-	}
 }
